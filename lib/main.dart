@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import './widgets/list_transactions.dart';
 import './models/transaction.dart';
 import './widgets/new_transaction.dart';
+import './widgets/chart.dart';
 
 void main() {
   runApp(MyApp());
@@ -35,22 +36,24 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  final List<Transaction> _userTransactions = [
-    Transaction(
-        id: 't0', title: 'New Shoes', amount: 69.99, date: DateTime.now()),
-    Transaction(
-        id: 't1',
-        title: 'Weekly groceries',
-        amount: 11.99,
-        date: DateTime.now()),
-  ];
+  final List<Transaction> _userTransactions = [];
 
-  void _addTransactions(String title, double amount) {
+  List<Transaction> get _recentTransactions {
+    return _userTransactions.where((tx) {
+      return tx.date.isAfter(
+        DateTime.now().subtract(
+          Duration(days: 7),
+        ),
+      );
+    }).toList();
+  }
+
+  void _addTransactions(String title, double amount, DateTime date) {
     final newTx = Transaction(
         id: DateTime.now().toString(),
         title: title,
         amount: amount,
-        date: DateTime.now());
+        date: date);
 
     setState(() {
       _userTransactions.add(newTx);
@@ -63,6 +66,12 @@ class _MyHomePageState extends State<MyHomePage> {
         builder: (_) {
           return NewTransaction(_addTransactions);
         });
+  }
+
+  void _deleteTransaction(String id) {
+    setState(() {
+      _userTransactions.removeWhere((element) => element.id == id);
+    });
   }
 
   @override
@@ -79,15 +88,8 @@ class _MyHomePageState extends State<MyHomePage> {
       body: SingleChildScrollView(
         child:
             Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-          Container(
-            width: double.infinity,
-            child: Card(
-              color: Colors.blue,
-              elevation: 5,
-              child: Text('Chart'),
-            ),
-          ),
-          TransactionList(_userTransactions)
+          Chart(_recentTransactions),
+          TransactionList(_userTransactions, _deleteTransaction),
         ]),
       ),
       floatingActionButton: FloatingActionButton(
